@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess The Color - Login / Daftar</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Fredoka One', sans-serif;
+  background: linear-gradient(135deg, #111, #333);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #fff;
+}
+
+/* Judul Animasi */
+h1 {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 36px;
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 40px;
+}
+
+h1 span {
+  display: inline-block;
+  animation: rainbowText 2s linear infinite;
+}
+
+@keyframes rainbowText {
+  0%{color:#ff4d4d;}
+  14%{color:#ffb84d;}
+  28%{color:#ffff4d;}
+  42%{color:#4dff4d;}
+  57%{color:#4dffff;}
+  71%{color:#4d4dff;}
+  85%{color:#b84dff;}
+  100%{color:#ff4d4d;}
+}
+
+/* Form Container */
+#authBox {
+  background: rgba(255,255,255,0.05);
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(255,255,255,0.1), 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 320px;
+}
+
+/* Input */
+input[type="text"], input[type="email"], input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+}
+
+/* Tombol 3D */
+button {
+  padding: 12px 25px;
+  margin-top: 15px;
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+  width: 100%;
+  box-shadow: 0 5px rgba(0,0,0,0.2);
+}
+
+/* Daftar */
+#registerBtn {
+  background: linear-gradient(45deg, #28a745, #85e085);
+  color: #fff;
+  text-shadow: 1px 1px #1e7e34;
+  box-shadow: 0 6px #1e7e34, 0 0 15px rgba(40,167,69,0.5);
+}
+
+#registerBtn:hover {
+  box-shadow: 0 8px #1e7e34, 0 0 25px rgba(40,167,69,0.7);
+  transform: scale(1.05);
+}
+
+#registerBtn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px #1e7e34, 0 0 15px rgba(40,167,69,0.5);
+}
+
+/* Masuk */
+#loginBtn {
+  background: linear-gradient(45deg, #007bff, #6ec0ff);
+  color: #fff;
+  text-shadow: 1px 1px #004085;
+  box-shadow: 0 6px #004085, 0 0 15px rgba(0,123,255,0.5);
+}
+
+#loginBtn:hover {
+  box-shadow: 0 8px #004085, 0 0 25px rgba(0,123,255,0.7);
+  transform: scale(1.05);
+}
+
+#loginBtn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px #004085, 0 0 15px rgba(0,123,255,0.5);
+}
+
+/* Info / Error */
+#message {
+  margin-top: 15px;
+  text-align: center;
+  font-weight: bold;
+  color: yellow;
+}
+</style>
+</head>
+<body>
+
+<h1>
+  Guess The<br>
+  <span>Color</span>
+</h1>
+
+<div id="authBox">
+  <input type="text" id="name" placeholder="Nama">
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <button id="loginBtn">Masuk</button>
+  <button id="registerBtn">Daftar</button>
+  <div id="message"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyARXV3oAQEw6dbXkfdZcTB5F7KCsWI1JyQ",
+  authDomain: "guessthecolor-ac681.firebaseapp.com",
+  databaseURL: "https://guessthecolor-ac681-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "guessthecolor-ac681",
+  storageBucket: "guessthecolor-ac681.appspot.com",
+  messagingSenderId: "210385013231",
+  appId: "1:210385013231:web:8a121ff0c3e390eef4ce1a",
+  measurementId: "G-QGYMCVKTJB"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const db = getDatabase();
+
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const nameInput = document.getElementById('name');
+const message = document.getElementById('message');
+
+// Register
+document.getElementById('registerBtn').addEventListener('click', ()=>{
+  const email = emailInput.value;
+  const pass = passwordInput.value;
+  const name = nameInput.value.trim();
+  if(!name){
+    message.style.color = "yellow";
+    message.textContent = "Nama wajib diisi untuk leaderboard!";
+    return;
+  }
+  createUserWithEmailAndPassword(auth, email, pass)
+  .then((userCredential)=>{
+    const user = userCredential.user;
+    // Simpan nama + akurasi
+    set(ref(db, 'users/' + user.uid), {
+      name: name,
+      email: email,
+      accuracy: 0
+    });
+    message.style.color = "limegreen";
+    message.textContent = "Berhasil daftar!";
+  })
+  .catch((error)=>{
+    message.style.color = "red";
+    message.textContent = error.message;
+  });
+});
+
+// Login
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  const email = emailInput.value;
+  const pass = passwordInput.value;
+  signInWithEmailAndPassword(auth, email, pass)
+  .then((userCredential)=>{
+    message.style.color = "limegreen";
+    message.textContent = "Berhasil masuk!";
+    setTimeout(()=>{ window.location.href = "game.html"; }, 1000);
+  })
+  .catch((error)=>{
+    message.style.color = "red";
+    message.textContent = error.message;
+  });
+});
+</script>
+
+</body>
+</html>
