@@ -18,21 +18,17 @@ body {
   padding:20px;
   color:#fff;
 }
-
 h1 {
   font-family:'Press Start 2P',cursive;
   font-size:32px;
   text-align:center;
   margin-bottom:20px;
-  line-height:1.2;
 }
-
 h1 span {
   display:inline-block;
   animation: rainbowText 2s linear infinite;
   font-weight:bold;
 }
-
 @keyframes rainbowText {
   0%{color:#ff4d4d;}
   14%{color:#ffb84d;}
@@ -43,7 +39,6 @@ h1 span {
   85%{color:#b84dff;}
   100%{color:#ff4d4d;}
 }
-
 #timer {
   font-size:28px;
   font-weight:bold;
@@ -54,7 +49,6 @@ h1 span {
   box-shadow:0 4px 15px rgba(255,255,255,0.2);
   text-align:center;
 }
-
 #colorBox {
   width:220px;
   height:220px;
@@ -67,14 +61,12 @@ h1 span {
   box-shadow:0 0 40px rgba(255,255,255,0.2);
   transition: background 0.3s, box-shadow 0.3s;
 }
-
 .sliderContainer {
   margin:10px 0;
   display:flex;
   flex-direction:column;
   width:260px;
 }
-
 input[type="range"] {
   width:100%;
   -webkit-appearance:none;
@@ -84,7 +76,6 @@ input[type="range"] {
   outline:none;
   transition:0.2s;
 }
-
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance:none;
   appearance:none;
@@ -97,11 +88,9 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow:0 2px #1e7e34;
   transition:0.2s;
 }
-
 input[type="range"]::-webkit-slider-thumb:active {
   transform:scale(1.2);
 }
-
 button {
   padding:12px 25px;
   margin-top:15px;
@@ -114,28 +103,24 @@ button {
   transition:all 0.1s ease-in-out;
   box-shadow:0 5px rgba(0,0,0,0.2);
 }
-
 #submitBtn {
   background:linear-gradient(45deg,#28a745,#85e085);
   color:#fff;
   text-shadow:1px 1px #1e7e34;
   box-shadow:0 6px #1e7e34,0 0 15px rgba(40,167,69,0.5);
 }
-
 #restartBtn {
   background:linear-gradient(45deg,#007bff,#6ec0ff);
   color:#fff;
   text-shadow:1px 1px #004085;
   box-shadow:0 6px #004085,0 0 15px rgba(0,123,255,0.5);
 }
-
 #result {
   margin-top:25px;
   font-size:18px;
   font-weight:bold;
   text-align:center;
 }
-
 #leaderboard {
   margin-top:30px;
   width:300px;
@@ -144,19 +129,16 @@ button {
   padding:20px;
   box-shadow:0 0 20px rgba(255,255,255,0.1);
 }
-
 #leaderboard h2 {
   text-align:center;
   margin-bottom:15px;
   font-size:20px;
 }
-
 #leaderboard ul {
   list-style:none;
   padding:0;
   margin:0;
 }
-
 #leaderboard li {
   padding:5px 0;
   border-bottom:1px solid rgba(255,255,255,0.2);
@@ -200,7 +182,7 @@ button {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
-import { getDatabase, ref, set, update, get, child, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyARXV3oAQEw6dbXkfdZcTB5F7KCsWI1JyQ",
@@ -238,6 +220,7 @@ function randomColor() {
 function startTimer() {
   timer = 5;
   timerEl.textContent = timer;
+  sliders.style.display='none';
   interval = setInterval(()=>{
     timer--;
     timerEl.textContent = timer;
@@ -271,11 +254,35 @@ function calcAccuracy(guess, actual){
   return score.toFixed(1);
 }
 
-// Restart button
+// Submit guess
+document.getElementById('submitBtn').addEventListener('click', async ()=>{
+  const guess = {
+    h: parseInt(document.getElementById('hue').value),
+    s: parseInt(document.getElementById('sat').value),
+    l: parseInt(document.getElementById('bri').value)
+  };
+  const accuracy = calcAccuracy(guess, color);
+  let colorAcc = accuracy < 40 ? 'red' : (accuracy < 70 ? 'yellow' : 'limegreen');
+  result.innerHTML = `Accuracy: <span style="color:${colorAcc}">${accuracy}%</span>`;
+  colorBox.style.background = `hsl(${color.h}, ${color.s}%, ${color.l}%)`;
+  colorBox.style.boxShadow = `0 0 40px hsl(${color.h}, ${color.s}%, ${color.l}%)`;
+
+  // Firebase update
+  const user = auth.currentUser;
+  if(user){
+    const userRef = ref(db,'users/'+user.uid);
+    const snapshot = await get(userRef);
+    let displayName = user.displayName || (snapshot.exists() ? snapshot.val().name : 'Anonymous') || 'Anonymous';
+    const newAccuracy = snapshot.exists() ? Math.max(Number(accuracy), Number(snapshot.val().accuracy || 0)) : Number(accuracy);
+    await set(userRef, {accuracy:newAccuracy, name:displayName, email:user.email});
+    updateLeaderboard();
+  }
+});
+
+// Restart
 document.getElementById('restartBtn').addEventListener('click', ()=>{
   clearInterval(interval);
-  result.innerHTML='';
-  sliders.style.display='none';
+  result.innerHTML = '';
   document.getElementById('hue').value=0;
   document.getElementById('sat').value=100;
   document.getElementById('bri').value=50;
@@ -286,58 +293,13 @@ document.getElementById('restartBtn').addEventListener('click', ()=>{
   startTimer();
 });
 
-// Submit guess & update Firebase
-document.getElementById('submitBtn').addEventListener('click', async ()=>{
-  const guess = {
-    h: parseInt(document.getElementById('hue').value),
-    s: parseInt(document.getElementById('sat').value),
-    l: parseInt(document.getElementById('bri').value)
-  };
-  const accuracy = calcAccuracy(guess, color);
-  let colorAcc;
-  if(accuracy < 40) colorAcc='red';
-  else if(accuracy < 70) colorAcc='yellow';
-  else colorAcc='limegreen';
-
-  result.innerHTML = `Accuracy: <span style="color:${colorAcc}">${accuracy}%</span>`;
-  colorBox.style.background = `hsl(${color.h}, ${color.s}%, ${color.l}%)`;
-  colorBox.style.boxShadow = `0 0 40px hsl(${color.h}, ${color.s}%, ${color.l}%)`;
-
-  // --- Firebase leaderboard update ---
-  // --- Firebase leaderboard update ---
-const user = auth.currentUser;
-if(user){
-  const userRef = ref(db,'users/'+user.uid);
-  const snapshot = await get(userRef);
-
-  // Ambil displayName dari auth dulu, fallback ke DB, fallback ke 'Anonymous'
-  let displayName = user.displayName;
-  if(!displayName && snapshot.exists()){
-    displayName = snapshot.val().name || 'Anonymous';
-  }
-  if(!displayName) displayName = 'Anonymous';
-
-  const newAccuracy = snapshot.exists() 
-    ? Math.max(accuracy, snapshot.val().accuracy || 0) 
-    : accuracy;
-
-  // Update semua sekaligus
-  await set(userRef, {
-    accuracy: newAccuracy,
-    name: displayName,
-    email: user.email
-  });
-
-  updateLeaderboard();
-  }
-
 // Leaderboard
 async function updateLeaderboard(){
   const snapshot = await get(ref(db,'users'));
   if(snapshot.exists()){
     const data = snapshot.val();
     const usersArray = Object.values(data).filter(u => u.accuracy !== undefined);
-    usersArray.sort((a,b)=>b.accuracy - a.accuracy); // descending
+    usersArray.sort((a,b)=>b.accuracy - a.accuracy);
     leaderboardList.innerHTML='';
     usersArray.slice(0,10).forEach(u=>{
       const li = document.createElement('li');
@@ -345,20 +307,16 @@ async function updateLeaderboard(){
       leaderboardList.appendChild(li);
     });
   }
-  }
+}
 
-// Cek login user
+// Cek login
 onAuthStateChanged(auth,user=>{
-  if(user){
-    updateLeaderboard();
-  }else{
-    window.location.href='index.html';
-  }
+  if(user) updateLeaderboard();
+  else window.location.href='index.html';
 });
 
 randomColor();
 startTimer();
 </script>
-
 </body>
-</html>
+  </html>
