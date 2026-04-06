@@ -317,19 +317,19 @@ document.getElementById('restartBtn').addEventListener('click', ()=>{
 
 // Leaderboard
 async function updateLeaderboard(){
-  const q = query(ref(db,'users'),orderByChild('accuracy'),limitToLast(10));
-  const snapshot = await get(q);
+  const snapshot = await get(ref(db,'users'));
   if(snapshot.exists()){
     const data = snapshot.val();
-    const sorted = Object.values(data).sort((a,b)=>b.accuracy - a.accuracy);
+    const usersArray = Object.values(data).filter(u => u.accuracy !== undefined);
+    usersArray.sort((a,b)=>b.accuracy - a.accuracy); // descending
     leaderboardList.innerHTML='';
-    sorted.forEach(u=>{
+    usersArray.slice(0,10).forEach(u=>{
       const li = document.createElement('li');
       li.textContent = `${u.name || 'Anonymous'} - ${u.accuracy}%`;
       leaderboardList.appendChild(li);
     });
   }
-}
+  }
 
 // Cek login user
 onAuthStateChanged(auth,user=>{
