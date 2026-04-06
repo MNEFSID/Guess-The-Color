@@ -278,26 +278,30 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     s: parseInt(document.getElementById('sat').value),
     l: parseInt(document.getElementById('bri').value)
   };
-  const accuracy = parseFloat(calcAccuracy(guess,color));
+  const accuracy = calcAccuracy(guess, color);
   let colorAcc;
-  if(accuracy<40) colorAcc='red';
-  else if(accuracy<70) colorAcc='yellow';
+  if(accuracy < 40) colorAcc='red';
+  else if(accuracy < 70) colorAcc='yellow';
   else colorAcc='limegreen';
 
   result.innerHTML = `Accuracy: <span style="color:${colorAcc}">${accuracy}%</span>`;
   colorBox.style.background = `hsl(${color.h}, ${color.s}%, ${color.l}%)`;
   colorBox.style.boxShadow = `0 0 40px hsl(${color.h}, ${color.s}%, ${color.l}%)`;
 
+  // --- Firebase leaderboard update ---
   const user = auth.currentUser;
   if(user){
     const userRef = ref(db,'users/'+user.uid);
     const snapshot = await get(userRef);
+    const displayName = user.displayName || 'Anonymous';
     if(snapshot.exists()){
       const data = snapshot.val();
-      const newAccuracy = Math.max(accuracy, data.accuracy||0);
-      await update(userRef,{accuracy:newAccuracy});
-      updateLeaderboard();
+      const newAccuracy = Math.max(accuracy, data.accuracy || 0);
+      await update(userRef, {accuracy: newAccuracy, name: displayName});
+    } else {
+      await set(userRef, {accuracy: accuracy, name: displayName});
     }
+    updateLeaderboard();
   }
 });
 
