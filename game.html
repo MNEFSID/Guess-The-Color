@@ -290,20 +290,22 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
 
   // --- Firebase leaderboard update ---
   const user = auth.currentUser;
-  if(user){
-    const userRef = ref(db,'users/'+user.uid);
-    const snapshot = await get(userRef);
-    const displayName = user.displayName || 'Anonymous';
-    if(snapshot.exists()){
-      const data = snapshot.val();
-      const newAccuracy = Math.max(accuracy, data.accuracy || 0);
-      await update(userRef, {accuracy: newAccuracy, name: displayName});
-    } else {
-      await set(userRef, {accuracy: accuracy, name: displayName});
-    }
-    updateLeaderboard();
+if(user){
+  const userRef = ref(db,'users/'+user.uid);
+  const snapshot = await get(userRef);
+  let displayName = user.displayName;
+  if(!displayName && snapshot.exists()){
+    displayName = snapshot.val().name || 'Anonymous';
   }
-});
+  if(snapshot.exists()){
+    const data = snapshot.val();
+    const newAccuracy = Math.max(accuracy, data.accuracy||0);
+    await update(userRef,{accuracy:newAccuracy, name: displayName});
+  } else {
+    await set(userRef,{accuracy: accuracy, name: displayName});
+  }
+  updateLeaderboard();
+  }
 
 document.getElementById('restartBtn').addEventListener('click', ()=>{
   clearInterval(interval);
