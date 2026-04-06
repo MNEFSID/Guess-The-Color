@@ -147,6 +147,7 @@ button {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
 import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+import { updateProfile } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyARXV3oAQEw6dbXkfdZcTB5F7KCsWI1JyQ",
@@ -169,6 +170,9 @@ const nameInput = document.getElementById('name');
 const message = document.getElementById('message');
 
 // Register
+import { updateProfile } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+
+// Register
 document.getElementById('registerBtn').addEventListener('click', ()=>{
   const email = emailInput.value;
   const pass = passwordInput.value;
@@ -181,12 +185,17 @@ document.getElementById('registerBtn').addEventListener('click', ()=>{
   createUserWithEmailAndPassword(auth, email, pass)
   .then((userCredential)=>{
     const user = userCredential.user;
-    // Simpan nama + akurasi
+
+    // Set displayName di auth supaya main.html bisa pakai nama ini
+    updateProfile(user, { displayName: name });
+
+    // Simpan nama + akurasi di DB
     set(ref(db, 'users/' + user.uid), {
       name: name,
       email: email,
       accuracy: 0
     });
+
     message.style.color = "limegreen";
     message.textContent = "Berhasil daftar!";
   })
