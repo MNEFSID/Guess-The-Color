@@ -271,6 +271,21 @@ function calcAccuracy(guess, actual){
   return score.toFixed(1);
 }
 
+// Restart button
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  clearInterval(interval);
+  result.innerHTML='';
+  sliders.style.display='none';
+  document.getElementById('hue').value=0;
+  document.getElementById('sat').value=100;
+  document.getElementById('bri').value=50;
+  document.getElementById('hueVal').textContent=0;
+  document.getElementById('satVal').textContent=100;
+  document.getElementById('briVal').textContent=50;
+  randomColor();
+  startTimer();
+});
+
 // Submit guess & update Firebase
 document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const guess = {
@@ -315,20 +330,6 @@ if(user){
 
   updateLeaderboard();
   }
-
-document.getElementById('restartBtn').addEventListener('click', ()=>{
-  clearInterval(interval);
-  result.innerHTML='';
-  sliders.style.display='none';
-  document.getElementById('hue').value=0;
-  document.getElementById('sat').value=100;
-  document.getElementById('bri').value=50;
-  document.getElementById('hueVal').textContent=0;
-  document.getElementById('satVal').textContent=100;
-  document.getElementById('briVal').textContent=50;
-  randomColor();
-  startTimer();
-});
 
 // Leaderboard
 async function updateLeaderboard(){
