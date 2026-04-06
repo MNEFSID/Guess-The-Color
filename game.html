@@ -289,21 +289,30 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   colorBox.style.boxShadow = `0 0 40px hsl(${color.h}, ${color.s}%, ${color.l}%)`;
 
   // --- Firebase leaderboard update ---
-  const user = auth.currentUser;
+  // --- Firebase leaderboard update ---
+const user = auth.currentUser;
 if(user){
   const userRef = ref(db,'users/'+user.uid);
   const snapshot = await get(userRef);
+
+  // Ambil displayName dari auth dulu, fallback ke DB, fallback ke 'Anonymous'
   let displayName = user.displayName;
   if(!displayName && snapshot.exists()){
     displayName = snapshot.val().name || 'Anonymous';
   }
-  if(snapshot.exists()){
-    const data = snapshot.val();
-    const newAccuracy = Math.max(accuracy, data.accuracy||0);
-    await update(userRef,{accuracy:newAccuracy, name: displayName});
-  } else {
-    await set(userRef,{accuracy: accuracy, name: displayName});
-  }
+  if(!displayName) displayName = 'Anonymous';
+
+  const newAccuracy = snapshot.exists() 
+    ? Math.max(accuracy, snapshot.val().accuracy || 0) 
+    : accuracy;
+
+  // Update semua sekaligus
+  await set(userRef, {
+    accuracy: newAccuracy,
+    name: displayName,
+    email: user.email
+  });
+
   updateLeaderboard();
   }
 
